@@ -3,6 +3,12 @@ title: 组件样式示例
 date: 2024-09-21 23:18:18
 updated: 2025-02-12 11:18:33
 
+reprint:
+  author: 纸鹿本鹿
+  link: https://blog.zhilu.site/previews/example
+  license: CC BY-NC-SA 4.0
+  licenseLink: https://creativecommons.org/licenses/by-nc-sa/4.0/
+
 # type: story
 ---
 
@@ -1012,6 +1018,70 @@ id: '7339041157571169546'
 ---
 type: douyin
 id: '7222222794333998392'
+---
+::
+```
+::
+
+## 下游特色组件
+### Reprint
+
+> 用于显示文章的转载信息，在 Front matter 中配置转载相关信息，会自动在文章顶部显示。
+
+::tab{:tabs='["Front matter示例","组件说明"]'}
+#tab1
+```yaml
+---
+title: 文章标题
+date: 2024-01-01
+
+# 转载信息配置（可选）
+reprint:
+  author: 念尘
+  link: https://nianchen.top/previews/example
+  license: CC BY-NC-SA 4.0
+  licenseLink: https://creativecommons.org/licenses/by-nc-sa/4.0/
+---
+```
+
+#tab2
+转载信息会在文章开头（标题下方、正文上方）自动显示，包含以下字段：
+
+- `author`: 原作者名称（可选）
+- `link`: 原文链接（可选）
+- `license`: 使用协议名称（可选）
+- `licenseLink`: 协议链接（可选）
+
+只需在文章 Front matter 中添加 `reprint` 字段配置即可，不需要在正文中使用组件标签。如果没有配置 `reprint` 字段，则不会显示转载信息。
+::
+
+### GitHub
+
+> 用于展示 GitHub 仓库信息卡片。通过项目链接（如 `owner/repo`）自动获取仓库信息，包含名称、简介、编程语言、Stars 数量和开源协议等信息。点击卡片可跳转到项目。
+>
+> **配置 GitHub Token**：为避免 API 请求频率限制，建议在项目根目录创建 `.env` 文件并添加 GitHub Token（从 [https://github.com/settings/tokens](https://github.com/settings/tokens) 获取，仅需 `public_repo` 权限）：
+> ```
+> GITHUB_TOKEN=your_token_here
+> ```
+>
+> **本地缓存**：数据会自动缓存在 `.cache/github-repos.json` 中（24 小时过期）。开发过程中避免频繁请求，构建时优先使用缓存。预构建阶段可运行以下命令预加载所有项目的缓存：
+> ```bash
+> npx tsx scripts/preload-github-cache.ts
+> ```
+
+::tab{:tabs='["组件","语法"]'}
+#tab1
+::github
+---
+repo: n1anchen/Nuxt-blog
+---
+::
+
+#tab2
+```mdc
+::github
+---
+repo: owner/repo
 ---
 ::
 ```

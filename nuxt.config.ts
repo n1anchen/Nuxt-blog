@@ -95,6 +95,7 @@ export default defineNuxtConfig({
 			buildTime: new Date().toISOString(),
 			// EdgeOne 检测暂时不可用
 			ci: env.TENCENTCLOUD_RUNENV === 'SCF' ? 'EdgeOne' : ciName || '',
+			githubToken: env.GITHUB_TOKEN || '',
 			nodeVersion,
 			platform,
 		},
@@ -124,7 +125,6 @@ export default defineNuxtConfig({
 
 	// @keep-sorted
 	modules: [
-		'@nuxt/a11y',
 		'@nuxt/content',
 		'@nuxt/hints',
 		'@nuxt/icon',

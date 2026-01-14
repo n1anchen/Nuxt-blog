@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import ContentReprint from '~/components/content/Reprint.vue'
+
 const route = useRoute()
 
 const layoutStore = useLayoutStore()
@@ -48,6 +50,9 @@ if (import.meta.dev) {
 <template>
 <template v-if="post">
 	<PostHeader v-bind="post" />
+	<div v-if="post.reprint" class="post-reprint">
+		<ContentReprint v-bind="post.reprint" />
+	</div>
 	<PostExcerpt v-if="excerpt" :excerpt />
 	<!-- 使用 float-in 动画会导致搜索跳转不准确 -->
 	<ContentRenderer
@@ -57,7 +62,7 @@ if (import.meta.dev) {
 		tag="article"
 	/>
 
-    <PostFooter v-if="post.postfooter" v-bind="post" />
+	<PostFooter v-if="post.postfooter" v-bind="post" />
 	<PostDonation v-if="post.donation" />
 	<PostSurround />
 	<PostComment v-if="post.comment" />
@@ -69,3 +74,13 @@ if (import.meta.dev) {
 	title="内容为空或页面不存在"
 />
 </template>
+
+<style lang="scss" scoped>
+.post-reprint {
+	margin: 0.5rem;
+
+	@media (max-width: $breakpoint-mobile) {
+		margin: 0;
+	}
+}
+</style>

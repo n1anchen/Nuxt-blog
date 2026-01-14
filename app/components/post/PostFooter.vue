@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ArticleProps } from '~/types/article'
+import type ArticleProps from '~/types/article'
 
 defineOptions({ inheritAttrs: false })
 const props = defineProps<ArticleProps>()
@@ -12,6 +12,9 @@ const appConfig = useAppConfig()
 const title = `${props.title} | ${appConfig.title}`
 const href = new URL(props.path!, appConfig.url).href
 const { copy, copied } = useCopy(href)
+
+// 判断是否是转载文章
+const isReprint = computed(() => !!props.reprint)
 </script>
 
 <template>
@@ -40,12 +43,22 @@ const { copy, copied } = useCopy(href)
 
 	<ReuseTemplate :title="meta?.slots?.copyright?.props?.title as string || '许可协议'">
 		<ContentRenderer v-if="meta?.slots?.copyright" :value="meta?.slots?.copyright" />
-		<p v-else>
-			本文采用 <ProseA :href="appConfig.copyright.url">
-				{{ appConfig.copyright.name }}
-			</ProseA>
-			许可协议，转载请注明出处。
-		</p>
+		<template v-else>
+			<p v-if="isReprint">
+				本文为转载文章，版权归原作者 <strong v-if="reprint?.author">{{ reprint.author }}</strong> 所有。
+				转载本文时应遵循原文的许可协议。<br>如需转载本站对该文的修改或评论，请参照本站的
+				<ProseA :href="appConfig.copyright.url">
+					{{ appConfig.copyright.name }}
+				</ProseA>
+				许可协议。
+			</p>
+			<p v-else>
+				若无特殊声明，本站所有原创文章均采用 <ProseA :href="appConfig.copyright.url">
+					{{ appConfig.copyright.name }}
+				</ProseA>
+				许可协议，转载请注明出处。
+			</p>
+		</template>
 	</ReuseTemplate>
 
 	<section class="share">
@@ -55,30 +68,30 @@ const { copy, copied } = useCopy(href)
 
 		<div class="content">
 			<ZButton
+				v-tip="'QQ'"
 				class="share-button"
 				icon="ri:qq-line"
-				v-tip="'QQ'"
 				:to="`https://connect.qq.com/widget/shareqq/index.html?title=${encodeURIComponent(title)}&url=${encodeURIComponent(href)}`"
 			/>
 			<ZButton
+				v-tip="'微博'"
 				class="share-button"
 				icon="ri:weibo-fill"
-				v-tip="'微博'"
 				:to="`https://service.weibo.com/share/share.php?title=${encodeURIComponent(title)}&url=${encodeURIComponent(href)}`"
 			/>
 			<ZButton
+				v-tip="'邮件'"
 				class="share-button"
 				icon="ph:envelope-simple-bold"
-				v-tip="'邮件'"
 				:to="`mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(href)}`"
 			/>
 			<ZButton
-				class="share-button"
-				icon="ph:link"
 				v-tip="{
 					content: copied ? '已复制链接' : '复制链接',
-					hideOnClick: false
+					hideOnClick: false,
 				}"
+				class="share-button"
+				icon="ph:link"
 				@click="copy()"
 			/>
 		</div>

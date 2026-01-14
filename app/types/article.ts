@@ -6,7 +6,7 @@ const _appConfig = useAppConfig()
 
 export type ArticleOrderType = keyof typeof _appConfig.article.order
 
-export default interface ArticleProps extends Partial<{
+export interface ArticleProps extends Partial<{
 	path: string
 	readingTime: ReadTimeResults
 

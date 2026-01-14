@@ -2,10 +2,7 @@
 import type { ArticleProps } from '~/types/article'
 import { isSameYear } from 'date-fns'
 
-const props = defineProps<{
-	to?: string
-	useUpdated?: boolean
-} & ArticleProps>()
+const props = defineProps<ArticleProps & { to?: string, useUpdated?: boolean }>()
 
 const mainDate = computed(() => props.useUpdated ? props.updated : props.date)
 </script>

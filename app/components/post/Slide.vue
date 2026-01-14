@@ -4,7 +4,11 @@ import Autoplay from 'embla-carousel-autoplay'
 import emblaCarouselVue from 'embla-carousel-vue'
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures'
 
-defineProps<{ list: ArticleProps[] }>()
+interface Props {
+	list: ArticleProps[]
+}
+
+defineProps<Props>()
 
 const appConfig = useAppConfig()
 const compConf = computed(() => appConfig.component.slide)

@@ -8,7 +8,7 @@ import { argv, cwd, env, exit } from 'node:process'
 import { config as dotenvConfig } from 'dotenv'
 import { saveToCache } from './utils-server.ts'
 
-async function preloadGitHubCache() {
+async function fetchGitHub() {
 	try {
 		// 加载 .env 文件（如果环境变量已存在则不会覆盖，适合云构建场景）
 		dotenvConfig()
@@ -87,9 +87,9 @@ async function preloadGitHubCache() {
 }
 
 // 导出供直接调用
-export { preloadGitHubCache }
+export { fetchGitHub }
 
 // 如果直接运行此文件
-if (argv[1]?.endsWith('preload-github-cache.ts')) {
-	preloadGitHubCache().catch(console.error)
+if (argv[1]?.endsWith('fetch-github.ts')) {
+	fetchGitHub().catch(console.error)
 }

@@ -7,8 +7,35 @@ import { join } from 'node:path'
 import { argv, cwd, env, exit } from 'node:process'
 import { saveToCache } from './utils-server.ts'
 
+async function loadEnv() {
+	try {
+		const envPath = join(cwd?.() ?? '.', '.env')
+		const envContent = readFileSync(envPath, 'utf-8')
+		const lines = envContent.split('\n')
+
+		for (const line of lines) {
+			const trimmedLine = line.trim()
+			if (trimmedLine && !trimmedLine.startsWith('#')) {
+				const [key, ...valueParts] = trimmedLine.split('=')
+				if (key && valueParts.length > 0) {
+					const value = valueParts.join('=').trim()
+					// 移除引号（如果存在）
+					const cleanValue = value.replace(/^["']|["']$/g, '')
+					env[key.trim()] = cleanValue
+				}
+			}
+		}
+	}
+	catch (err) {
+		console.warn('Failed to load .env file:', err instanceof Error ? err.message : String(err))
+	}
+}
+
 async function preloadGitHubCache() {
 	try {
+		// 先加载 .env 文件到环境变量
+		await loadEnv()
+
 		// 读取 example.md 找出所有使用的 GitHub 仓库
 		const examplePath = join(cwd?.() ?? '.', 'content/previews/example.md')
 		const content = readFileSync(examplePath, 'utf-8')

@@ -22,11 +22,18 @@ const props = defineProps<{
 
 // 使用 useAsyncData 配合 $fetch 在服务端获取数据，避免客户端调用不存在的 API
 // 在静态生成时，数据会被预渲染并序列化到 payload 中
+// server: false 确保只在服务端/预渲染时获取数据，客户端直接使用缓存的数据
 const { data: result, error: fetchError, status } = await useAsyncData<{ data: GitHubRepo }>(
 	`github-${props.repo}`,
 	() => $fetch('/api/github', {
 		query: { repo: props.repo },
 	}),
+	{
+		server: true,
+		lazy: false,
+		// 关键：阻止客户端重新获取数据
+		getCachedData: key => useNuxtApp().static.data[key] ?? useNuxtApp().payload.data[key],
+	},
 )
 
 const loading = computed(() => status.value === 'pending')

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { argv, cwd, env, exit } from 'node:process'
 /**
@@ -8,36 +8,83 @@ import { argv, cwd, env, exit } from 'node:process'
 import { config as dotenvConfig } from 'dotenv'
 import { saveToCache } from '../server/utils/github-cache.js'
 
+/**
+ * 递归扫描目录，查找所有 markdown 文件
+ */
+function findMarkdownFiles(dir: string, fileList: string[] = []): string[] {
+	try {
+		const files = readdirSync(dir)
+
+		for (const file of files) {
+			const filePath = join(dir, file)
+			const stat = statSync(filePath)
+
+			if (stat.isDirectory()) {
+				findMarkdownFiles(filePath, fileList)
+			}
+			else if (file.endsWith('.md')) {
+				fileList.push(filePath)
+			}
+		}
+	}
+	catch (err) {
+		console.error(`Error scanning directory ${dir}:`, err)
+	}
+
+	return fileList
+}
+
+/**
+ * 从 markdown 内容中提取所有 GitHub 仓库引用
+ */
+function extractGitHubRepos(content: string): Set<string> {
+	const repos = new Set<string>()
+	const lines = content.split('\n')
+
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i]
+		if (line.includes('::github')) {
+			// 查找 repo: 行
+			for (let j = i + 1; j < Math.min(i + 10, lines.length); j++) {
+				const repoLine = lines[j]
+				if (repoLine.includes('repo:')) {
+					const match = repoLine.match(/repo:\s*(\S+)/)
+					if (match && match[1]) {
+						const repo = match[1].trim()
+						if (repo && !repo.includes('\n') && repo.includes('/')) {
+							repos.add(repo)
+						}
+					}
+					break
+				}
+			}
+		}
+	}
+
+	return repos
+}
+
 async function fetchGitHub() {
 	try {
 		// 加载 .env 文件（如果环境变量已存在则不会覆盖，适合云构建场景）
 		dotenvConfig()
 
-		// 读取 example.md 找出所有使用的 GitHub 仓库
-		const examplePath = join(cwd?.() ?? '.', 'content/previews/example.md')
-		const content = readFileSync(examplePath, 'utf-8')
+		// 扫描 content 目录下的所有 markdown 文件
+		const contentDir = join(cwd?.() ?? '.', 'content')
+		const markdownFiles = findMarkdownFiles(contentDir)
 
-		// 解析 ::github 组件中的 repo 属性
+		console.log(`Found ${markdownFiles.length} markdown files. Scanning for GitHub repos...`)
+
+		// 从所有 markdown 文件中提取 GitHub 仓库
 		const repos = new Set<string>()
-		const lines = content.split('\n')
-
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i]
-			if (line.includes('::github')) {
-				// 查找 repo: 行
-				for (let j = i + 1; j < Math.min(i + 10, lines.length); j++) {
-					const repoLine = lines[j]
-					if (repoLine.includes('repo:')) {
-						const match = repoLine.match(/repo:\s*(\S+)/)
-						if (match && match[1]) {
-							const repo = match[1].trim()
-							if (repo && !repo.includes('\n') && repo.includes('/')) {
-								repos.add(repo)
-							}
-						}
-						break
-					}
-				}
+		for (const filePath of markdownFiles) {
+			try {
+				const content = readFileSync(filePath, 'utf-8')
+				const fileRepos = extractGitHubRepos(content)
+				fileRepos.forEach(repo => repos.add(repo))
+			}
+			catch (err) {
+				console.error(`Error reading ${filePath}:`, err)
 			}
 		}
 

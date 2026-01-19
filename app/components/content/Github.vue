@@ -20,12 +20,14 @@ const props = defineProps<{
 	repo: string
 }>()
 
-// 使用 useFetch 以支持服务端渲染和静态生成
-// 这样数据会在预渲染时被获取并内联到 HTML 中
-const { data: result, error: fetchError, status } = await useFetch<{ data: GitHubRepo }>(`/api/github`, {
-	query: { repo: props.repo },
-	key: `github-${props.repo}`,
-})
+// 使用 useAsyncData 配合 $fetch 在服务端获取数据，避免客户端调用不存在的 API
+// 在静态生成时，数据会被预渲染并序列化到 payload 中
+const { data: result, error: fetchError, status } = await useAsyncData<{ data: GitHubRepo }>(
+	`github-${props.repo}`,
+	() => $fetch('/api/github', {
+		query: { repo: props.repo },
+	}),
+)
 
 const loading = computed(() => status.value === 'pending')
 const error = computed(() => {

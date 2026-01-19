@@ -6,7 +6,7 @@ import { argv, cwd, env, exit } from 'node:process'
  * 使用: npx tsx scripts/fetch-github.ts
  */
 import { config as dotenvConfig } from 'dotenv'
-import { saveToCache } from './utils-server.ts'
+import { saveToCache } from '../server/utils/github-cache.js'
 
 async function fetchGitHub() {
 	try {
@@ -90,6 +90,6 @@ async function fetchGitHub() {
 export { fetchGitHub }
 
 // 如果直接运行此文件
-if (argv[1]?.endsWith('fetch-github.ts')) {
+if (argv[1]?.endsWith('fetch-github.ts') || argv[1]?.endsWith('fetch-github')) {
 	fetchGitHub().catch(console.error)
 }

@@ -24,7 +24,8 @@
     "init-project": "tsx scripts/init-project",
     "new": "tsx scripts/new-blog",
     "check:feed": "tsx scripts/framework/get-feed",
-    "check:feed/all": "tsx scripts/framework/check-all-feeds"
+    "check:feed/all": "tsx scripts/framework/check-all-feeds",
+    "fetch:github": "tsx scripts/fetch-github"
   },
   "dependencies": {
     "@nuxt/content": "catalog:content",

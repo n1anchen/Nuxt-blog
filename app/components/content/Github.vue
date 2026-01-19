@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed } from 'vue'
 
 interface GitHubRepo {
 	name: string
@@ -20,10 +20,28 @@ const props = defineProps<{
 	repo: string
 }>()
 
-const loading = ref(true)
-const error = ref<string | null>(null)
-const repoData = ref<GitHubRepo | null>(null)
+// 使用 useFetch 以支持服务端渲染和静态生成
+// 这样数据会在预渲染时被获取并内联到 HTML 中
+const { data: result, error: fetchError, status } = await useFetch<{ data: GitHubRepo }>(`/api/github`, {
+	query: { repo: props.repo },
+	key: `github-${props.repo}`,
+})
 
+const loading = computed(() => status.value === 'pending')
+const error = computed(() => {
+	if (fetchError.value) {
+		const statusCode = (fetchError.value as any)?.statusCode
+		if (statusCode === 404)
+			return 'Repository not found'
+		else if (statusCode === 403)
+			return 'GitHub API rate limit exceeded. Please set GITHUB_TOKEN in .env'
+		else
+			return fetchError.value.message || 'Failed to fetch repository data'
+	}
+	return null
+})
+
+const repoData = computed(() => result.value?.data ?? null)
 const ownerName = computed(() => repoData.value?.owner?.login ?? 'Unknown')
 const repoName = computed(() => repoData.value?.name ?? 'Unknown')
 const description = computed(() => repoData.value?.description ?? 'No description')
@@ -32,48 +50,6 @@ const avatar = computed(() => repoData.value?.owner?.avatar_url ?? '')
 const repoUrl = computed(() => repoData.value?.html_url ?? '')
 const stars = computed(() => repoData.value?.stargazers_count ?? 0)
 const language = computed(() => repoData.value?.language ?? '')
-
-async function fetchRepoData() {
-	try {
-		loading.value = true
-		error.value = null
-
-		const [owner, repo] = props.repo.split('/').filter(Boolean)
-		if (!owner || !repo) {
-			error.value = 'Invalid repository format. Use: owner/repo'
-			loading.value = false
-			return
-		}
-
-		const response = await fetch(`/api/github?repo=${owner}/${repo}`)
-
-		if (!response.ok) {
-			const statusCode = response.status
-			if (statusCode === 404)
-				error.value = 'Repository not found'
-			else if (statusCode === 403)
-				error.value = 'GitHub API rate limit exceeded. Please set GITHUB_TOKEN in .env'
-			else
-				error.value = `GitHub API error: ${statusCode}`
-
-			loading.value = false
-			return
-		}
-
-		const result = await response.json()
-		repoData.value = result.data
-	}
-	catch (err) {
-		error.value = err instanceof Error ? err.message : 'Failed to fetch repository data'
-	}
-	finally {
-		loading.value = false
-	}
-}
-
-onMounted(() => {
-	fetchRepoData()
-})
 </script>
 
 <template>

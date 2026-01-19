@@ -169,6 +169,23 @@ pnpm generate
 pnpm preview
 ```
 
+#### GitHub 卡片缓存
+
+如果你在文章中使用了 `::github` 组件显示 GitHub 仓库卡片，在执行 `pnpm generate` 静态生成前，需要先预取 GitHub 数据：
+
+```sh
+# 设置 GitHub Token（可选但推荐，避免 API 限流）
+# 在 .env 文件中添加: GITHUB_TOKEN=your_github_token
+
+# 预取 GitHub 仓库数据
+pnpm fetch:github
+
+# 然后执行静态生成
+pnpm generate
+```
+
+如果已有缓存文件（`.cache/github-repos.json`），在预渲染时会自动使用。如果没有缓存且未设置 `GITHUB_TOKEN`，GitHub 卡片可能会显示 "Repository not found"。
+
 ### 部署指南
 
 支持 Vercel、Netlify、Cloudflare Pages、EdgeOne 等平台部署。建议采用静态（SSG）部署方式：

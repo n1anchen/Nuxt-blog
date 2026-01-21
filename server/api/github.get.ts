@@ -1,79 +1,47 @@
-import { getFromCache, saveToCache } from '../utils/github-cache'
+/**
+ * GitHub 仓库信息 API
+ * 代理 GitHub API，解决 CORS 和 Token 问题
+ * 使用 cachedEventHandler 在开发环境缓存响应，避免频繁请求触发速率限制
+ * Nuxt SSG 会自动将 useAsyncData 的结果序列化到静态 HTML 中
+ */
+export default defineCachedEventHandler(async (event) => {
+	const { repo } = getQuery(event)
 
-export default defineEventHandler(async (event) => {
-	const query = getQuery(event)
-	const repo = query.repo as string
+	if (!repo || typeof repo !== 'string') {
+		throw createError({ statusCode: 400, statusMessage: 'repo parameter is required' })
+	}
 
-	if (!repo) {
+	if (!repo.includes('/') || repo.split('/').filter(Boolean).length !== 2) {
+		throw createError({ statusCode: 400, statusMessage: 'Invalid repo format. Use: owner/repo' })
+	}
+
+	const config = useRuntimeConfig()
+	const headers: Record<string, string> = {
+		'Accept': 'application/vnd.github.v3+json',
+		'User-Agent': 'Nuxt-Blog',
+	}
+
+	if (config.githubToken) {
+		headers.Authorization = `token ${config.githubToken}`
+	}
+
+	const response = await fetch(`https://api.github.com/repos/${repo}`, { headers })
+
+	if (!response.ok) {
 		throw createError({
-			statusCode: 400,
-			statusMessage: 'repo parameter is required',
+			statusCode: response.status,
+			statusMessage: response.status === 404
+				? 'Repository not found'
+				: response.status === 403
+					? 'GitHub API rate limit exceeded'
+					: `GitHub API error: ${response.status}`,
 		})
 	}
 
-	const [owner, repoName] = repo.split('/').filter(Boolean)
-	if (!owner || !repoName) {
-		throw createError({
-			statusCode: 400,
-			statusMessage: 'Invalid repo format. Use: owner/repo',
-		})
-	}
-
-	// 尝试从缓存读取
-	const cached = await getFromCache(repo)
-	if (cached) {
-		return {
-			data: cached,
-			fromCache: true,
-		}
-	}
-
-	try {
-		const config = useRuntimeConfig()
-		const headers: Record<string, string> = {
-			Accept: 'application/vnd.github.v3+json',
-		}
-
-		if (config.public.githubToken) {
-			headers.Authorization = `token ${config.public.githubToken}`
-		}
-
-		const response = await fetch(`https://api.github.com/repos/${owner}/${repoName}`, {
-			headers,
-		})
-
-		if (!response.ok) {
-			const statusMessage
-				= response.status === 404
-					? 'Repository not found'
-					: response.status === 403
-						? 'GitHub API rate limit exceeded'
-						: `GitHub API error: ${response.status}`
-
-			throw createError({
-				statusCode: response.status,
-				statusMessage,
-			})
-		}
-
-		const data = await response.json()
-
-		// 保存到缓存
-		await saveToCache(repo, data)
-
-		return {
-			data,
-			fromCache: false,
-		}
-	}
-	catch (err: unknown) {
-		if (typeof err === 'object' && err !== null && 'statusCode' in err) {
-			throw err
-		}
-
-		throw createError({
-			statusCode: 500,
-			statusMessage: err instanceof Error ? err.message : 'Failed to fetch repository data',
-		})
-	}
+	return { data: await response.json() }
+}, {
+	// 缓存 1 小时，开发时避免频繁请求
+	maxAge: 60 * 60,
+	// 使用 repo 参数作为缓存 key
+	getKey: event => `github:${getQuery(event).repo}`,
 })

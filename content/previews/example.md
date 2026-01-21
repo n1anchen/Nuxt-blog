@@ -1063,11 +1063,6 @@ reprint:
 > ```
 > GITHUB_TOKEN=your_token_here
 > ```
->
-> **本地缓存**：数据会自动缓存在 `.cache/github-repos.json` 中（24 小时过期）。开发过程中避免频繁请求，构建时优先使用缓存。预构建阶段可运行以下命令预加载所有项目的缓存：
-> ```bash
-> npx tsx scripts/fetch-github.ts
-> ```
 
 ::tab{:tabs='["组件","语法"]'}
 #tab1

@@ -91,13 +91,14 @@ export default defineNuxtConfig({
 	},
 
 	runtimeConfig: {
+		// 服务端私有配置 - 从 NUXT_GITHUB_TOKEN 或 GITHUB_TOKEN 环境变量读取
+		githubToken: env.GITHUB_TOKEN || '',
 		// @keep-sorted
 		public: {
 			arch,
 			buildTime: new Date().toISOString(),
 			// EdgeOne 检测暂时不可用
 			ci: env.TENCENTCLOUD_RUNENV === 'SCF' ? 'EdgeOne' : ciName || '',
-			githubToken: env.GITHUB_TOKEN || '',
 			nodeVersion,
 			platform,
 		},
